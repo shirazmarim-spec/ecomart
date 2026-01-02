@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "874619078267",
+    "project_id": "test2-a1f71",
+    "storage_bucket": "test2-a1f71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874619078267:android:164516f64dfe1200c644de",
+        "android_client_info": {
+          "package_name": "com.example.ecomart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApOzM_ls394nMAV_XMNlR0-J4YDKqJgSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874619078267:android:c94993ca0fc97959c644de",
+        "android_client_info": {
+          "package_name": "com.example.mytest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApOzM_ls394nMAV_XMNlR0-J4YDKqJgSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

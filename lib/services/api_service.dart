@@ -1,49 +1,62 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // للـ token
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
-  static const String baseUrl =
-      "http://10.0.2.2:8000/api/"; // للـ emulator (localhost:8000 من الجهاز)
+  static String get baseUrl {
+    if (kIsWeb) {
+      return "http://localhost:8000/api";
+    } else {
+      return "http://10.0.2.2:8000/api";
+    }
+  }
 
   final http.Client client = http.Client();
 
-  // Login
+  Future<Map<String, String>> _getHeaders({bool withToken = false}) async {
+    final headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Accept': 'application/json',
+    };
+    if (withToken) {
+      final token = await getToken();
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
+  }
+
+  Future<String> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
   Future<Map<String, dynamic>> login(String email, String password) async {
+    final headers = await _getHeaders();
     final response = await client.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      },
+      headers: headers,
       body: jsonEncode({'email': email, 'password': password}),
     );
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'token',
-        data['token'],
-      ); // حفظ token مثل TokenProvider
+      await _saveToken(data['token']);
       return data;
     } else {
       throw Exception('Login failed: ${response.body}');
     }
   }
 
-  // Register
   Future<Map<String, dynamic>> register(
     String name,
     String email,
     String password,
   ) async {
+    final headers = await _getHeaders();
     final response = await client.post(
       Uri.parse('$baseUrl/auth/register'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      },
+      headers: headers,
       body: jsonEncode({
         'name': name,
         'email': email,
@@ -54,25 +67,17 @@ class ApiService {
 
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']);
+      await _saveToken(data['token']);
       return data;
     } else {
       throw Exception('Register failed: ${response.body}');
     }
   }
 
-  // Get User (مع token)
   Future<Map<String, dynamic>> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
     final response = await client.get(
       Uri.parse('$baseUrl/user'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: await _getHeaders(withToken: true),
     );
 
     if (response.statusCode == 200) {
@@ -82,14 +87,11 @@ class ApiService {
     }
   }
 
-  // Get Products
-  Future<List<dynamic>> getProducts() async {
+  Future<Map<String, dynamic>> getProducts() async {
+    final headers = await _getHeaders();
     final response = await client.get(
       Uri.parse('$baseUrl/products'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      },
+      headers: headers,
     );
 
     if (response.statusCode == 200) {
@@ -99,10 +101,64 @@ class ApiService {
     }
   }
 
-  // Logout
   Future<void> logout() async {
+    await _removeToken();
+  }
+
+  Future<void> _saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+  }
+
+  Future<void> _removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+  }
+
+  Future<void> sendNotification(String message) async {
+    final headers = await _getHeaders(withToken: true);
+    final response = await client.post(
+      Uri.parse('$baseUrl/notifications/send'),
+      headers: headers,
+      body: jsonEncode({'message': message}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Send notification failed: ${response.body}');
+    }
+  }
+
+  Future<Map<String, String>> getHeaders({bool withToken = false}) async {
+    return await _getHeaders(withToken: withToken);
+  }
+
+  Future<Map<String, dynamic>> updateUser(Map<String, dynamic> data) async {
+    final headers = await _getHeaders(withToken: true);
+    final response = await client.put(
+      Uri.parse('$baseUrl/user'),
+      headers: headers,
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Update user failed: ${response.body}');
+    }
+  }
+
+  Future<List<dynamic>> getOrders() async {
+    final headers = await _getHeaders(withToken: true);
+    final response = await client.get(
+      Uri.parse('$baseUrl/orders'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['data'] ?? [];
+    } else {
+      throw Exception('Get orders failed: ${response.body}');
+    }
   }
 
   void dispose() {

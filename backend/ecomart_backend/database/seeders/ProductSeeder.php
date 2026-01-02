@@ -2,58 +2,40 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Product;
+use App\Models\Category;
 
 class ProductSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        $category1 = Category::create([
+            'name' => 'Electronics',
+            'description' => 'Gadgets and tech products.',
+        ]);
+
+        $category2 = Category::create([
+            'name' => 'Clothing',
+            'description' => 'Fashion items.',
+        ]);
+
         Product::create([
-            'name' => 'Laptop',
-            'description' => 'High-end laptop',
-            'price' => 1000.00,
+            'name' => 'Sample Product 1',
+            'description' => 'A great product for testing!',
+            'price' => 99.99,
             'stock' => 10,
-            'image_url' => 'https://via.placeholder.com/150?text=Laptop',
+            'image_url' => 'https://example.com/image1.jpg', 
+            'category_id' => $category1->id,
         ]);
 
         Product::create([
-            'name' => 'Phone',
-            'description' => 'Smartphone',
-            'price' => 500.00,
-            'stock' => 20,
-            'image_url' => 'https://via.placeholder.com/150?text=Phone',
-        ]);
-
-        // أضيفي 3 أكثر بنفس الشكل
-        Product::create([
-            'name' => 'Tablet',
-            'description' => 'Tablet device',
-            'price' => 300.00,
-            'stock' => 15,
-            'image_url' => 'https://via.placeholder.com/150?text=Tablet',
-        ]);
-
-        Product::create([
-            'name' => 'Headphones',
-            'description' => 'Wireless headphones',
-            'price' => 100.00,
-            'stock' => 30,
-            'image_url' => 'https://via.placeholder.com/150?text=Headphones',
-        ]);
-
-        Product::create([
-            'name' => 'Mouse',
-            'description' => 'Wireless mouse',
-            'price' => 20.00,
-            'stock' => 50,
-            'image_url' => 'https://via.placeholder.com/150?text=Mouse',
+            'name' => 'Sample Product 2',
+            'description' => 'Another awesome item.',
+            'price' => 149.99,
+            'stock' => 5,
+            'image_url' => 'https://example.com/image2.jpg',
+            'category_id' => $category2->id,
         ]);
     }
 }
