@@ -16,7 +16,7 @@ class PaymentService {
 
   Future<String> createPaymentIntent(int orderId) async {
     final response = await http.post(
-      Uri.parse('${ApiService.baseUrl}/payments/intent'),
+      Uri.parse('${ApiService.baseUrl}/api/payments/intent'),
       headers: await api.getHeaders(withToken: true),
       body: jsonEncode({'order_id': orderId}),
     );
