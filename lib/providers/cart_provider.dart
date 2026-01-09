@@ -14,10 +14,10 @@ class CartProvider with ChangeNotifier {
   List<CartItem> get items => _items;
   int get itemCount => _items.length;
   double get totalAmount {
-    return _items.fold(
-      0.0,
-      (sum, item) => sum + (item.product['price'] * item.quantity),
-    );
+    return _items.fold(0.0, (sum, item) {
+      final price = double.tryParse(item.product['price'].toString()) ?? 0.0;
+      return sum + (price * item.quantity);
+    });
   }
 
   void addItem(dynamic product) {
@@ -27,14 +27,26 @@ class CartProvider with ChangeNotifier {
     if (existingIndex >= 0) {
       _items[existingIndex].quantity++;
     } else {
-      _items.add(CartItem(product: product));
+      final parsedProduct = Map<String, dynamic>.from(product);
+      parsedProduct['price'] =
+          double.tryParse(product['price'].toString()) ?? 0.0;
+      _items.add(CartItem(product: parsedProduct));
     }
     notifyListeners();
   }
 
-  void removeItem(dynamic productId) {
-    _items.removeWhere((item) => item.product['id'] == productId);
-    notifyListeners();
+  void decreaseQuantity(dynamic productId) {
+    final existingIndex = _items.indexWhere(
+      (item) => item.product['id'] == productId,
+    );
+    if (existingIndex >= 0) {
+      if (_items[existingIndex].quantity > 1) {
+        _items[existingIndex].quantity--;
+      } else {
+        _items.removeAt(existingIndex);
+      }
+      notifyListeners();
+    }
   }
 
   void clear() {
@@ -42,3 +54,4 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+
