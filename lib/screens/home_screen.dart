@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'order_screen.dart';
 import 'profile_screen.dart';
+import 'cart_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -233,6 +234,46 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             onPressed: themeProvider.toggleTheme,
           ),
+          Consumer<CartProvider>(
+            builder: (context, cartProvider, child) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart),
+                    tooltip: TranslationConstants.getString(context, 'cart'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CartScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (cartProvider.itemCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${cartProvider.itemCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.receipt),
             tooltip: TranslationConstants.getString(context, 'orders'),
@@ -241,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => const OrderScreen()),
             ),
           ),
-          // ← زر الـ Profile الجديد
+
           IconButton(
             icon: const Icon(Icons.person),
             tooltip: TranslationConstants.getString(context, 'profile'),
@@ -306,14 +347,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           isDark: isDark,
                           isArabic: isArabic,
                           onTap: () {
+                            Provider.of<CartProvider>(
+                              context,
+                              listen: false,
+                            ).addItem(product);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Added ${product['name']} to cart!',
+                                  '${TranslationConstants.getString(context, 'addedToCart')}: ${product['name']}',
                                 ),
+                                backgroundColor: Colors.green,
                               ),
                             );
-                            // هنا ممكن تضيفي add to cart logic
                           },
                         ),
                       ),
@@ -448,3 +493,4 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
+
