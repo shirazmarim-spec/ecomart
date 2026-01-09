@@ -30,7 +30,7 @@ class PaymentController extends Controller
             }
 
             $intent = PaymentIntent::create([
-                'amount' => $order->total * 100, 
+                'amount' => (int) bcmul($order->total, 100, 0), 
                 'currency' => 'usd',
                 'metadata' => ['order_id' => $order->id],
             ]);
@@ -55,14 +55,34 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Webhook signature verification failed'], 400);
         }
 
-        if ($event->type == 'payment_intent.succeeded') {
-            $paymentIntent = $event->data->object;
-            $orderId = $paymentIntent->metadata['order_id'];
-            $order = Order::findOrFail($orderId);
-            $order->status = 'paid';
-            $order->save();
-        }
+       if ($event->type === 'payment_intent.succeeded') {
+    $paymentIntent = $event->data->object;
 
+   
+    $orderId = $paymentIntent->metadata['order_id'] ?? null;
+    if (!$orderId) {
+        Log::warning('Webhook received without order_id');
+        return response()->json(['status' => 'ignored'], 200);
+    }
+
+    $order = Order::find($orderId);
+
+    if (!$order) {
+        Log::warning("Order not found for ID: $orderId");
+        return response()->json(['status' => 'ignored'], 200);
+    }
+
+   
+    if ($order->status === 'paid') {
+        return response()->json(['status' => 'already_paid'], 200);
+    }
+
+   
+    $order->status = 'paid';
+    $order->save();
+
+    Log::info("Order $orderId marked as paid via webhook");
+}
         return response()->json(['status' => 'success'], 200);
     }
 }
