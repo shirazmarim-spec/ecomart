@@ -41,7 +41,6 @@ class _CartScreenState extends State<CartScreen> {
     });
 
     try {
-      // إنشاء الطلب في الـ backend
       final response = await http.post(
         Uri.parse('${ApiService.baseUrl}/orders'),
         headers: await api.getHeaders(withToken: true),
@@ -51,6 +50,8 @@ class _CartScreenState extends State<CartScreen> {
               'id': item.product['id'],
               'quantity': item.quantity,
               'price': item.product['price'],
+              'name': item.product['name'],
+              'image_url': item.product['image_url'],
             };
           }).toList(),
           'total': cartProvider.totalAmount,
@@ -63,7 +64,6 @@ class _CartScreenState extends State<CartScreen> {
 
         if (!mounted) return;
 
-        // الانتقال لصفحة الدفع مع orderId الحقيقي
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -205,8 +205,9 @@ class _CartScreenState extends State<CartScreen> {
                             children: [
                               IconButton(
                                 icon: Icon(Icons.remove_circle_outline),
-                                onPressed: () =>
-                                    cartProvider.removeItem(item.product['id']),
+                                onPressed: () => cartProvider.decreaseQuantity(
+                                  item.product['id'],
+                                ),
                               ),
                               Text(
                                 '${item.quantity}',
