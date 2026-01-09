@@ -6,6 +6,7 @@ import '../constants/translation_constants.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/payment_service.dart';
+import '../providers/cart_provider.dart';
 
 class PaymentScreen extends StatefulWidget {
   final double total;
@@ -28,6 +29,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     _paymentService.init();
   }
 
+  // ملاحظة مهمة:
+  // دمج Stripe كامل وحقيقي (test mode)
+  // يعمل بشكل مثالي على Android/iOS
+  // على Web (Chrome)، flutter_stripe ما بيدعمش Payment Sheet كامل، لذا قد يظهر خطأ
+  // للـ demo على Web، يمكن استخدام mock payment مؤقتًا (غير مفعل حاليًا)
+  // بطاقة اختبار: 4242 4242 4242 4242 (أي تاريخ مستقبلي، أي CVC)
   Future<void> _processPayment() async {
     setState(() {
       _isLoading = true;
@@ -35,15 +42,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
+      // جلب client_secret من الـ backend (Stripe PaymentIntent حقيقي)
       final clientSecret = await _paymentService.createPaymentIntent(
         widget.orderId,
       );
 
+      // تأكيد الدفع باستخدام flutter_stripe
       final success = await _paymentService.confirmPayment(clientSecret);
 
       if (!mounted) return;
 
       if (success) {
+        // مسح السلة بعد الدفع الناجح
+        Provider.of<CartProvider>(context, listen: false).clear();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -52,9 +64,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // الانتقال لصفحة الطلبات
         Navigator.pushReplacementNamed(context, '/orders');
       } else {
-        throw Exception('Payment failed');
+        throw Exception('Payment failed or cancelled');
       }
     } catch (e) {
       if (!mounted) return;
@@ -62,6 +76,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         _errorMessage = e.toString();
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
